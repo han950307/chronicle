@@ -20,7 +20,7 @@ event = None
 
 """ FONTS """
 titleFont = tkFont.Font(family="Helvetica", size=30)
-errorFont = tkFont.Font(family="Helvetica", size=12)
+errorFont = tkFont.Font(family="Helvetica", size=12, weight="bold")
 dirFont = tkFont.Font(family="Helvetica", size=20)
 
 """ DEFAULT FUNCTIONS """
@@ -39,7 +39,7 @@ def expandScreen():
   root.overrideredirect(1)
   root.geometry("%dx%d+0+0" % (w, h))
   root.focus_set()  # <-- move focus to this widget
-  root.bind("<Escape>", lambda e: e.widget.quit())  
+  root.bind("<Control-R>", lambda e: e.widget.quit())  
 
 """ API CALLS """
 def getUInfo(dukecardID):
@@ -86,6 +86,7 @@ def checkinEquip(equipID):
   global event
   requestURL = str('http://chronphoto-niblet.rhcloud.com/_api/checkinequip.php?equipID=') + \
                str(equipID) + str('&dukecardID=') + str(user['dukecardID']) + str('&eventDesc=') + str(quote_plus(event))
+  print requestURL
   request = Request(requestURL)
   try:
     response = urlopen(request)
@@ -113,7 +114,7 @@ def loadLoginGUI(*args):
   directionLabel = Tkinter.Label(parent, textvariable=directionTxt, font=dirFont)
   directionTxt.set("Scan your DukeCard to begin.")
   errorTxt = Tkinter.StringVar()
-  errorLabel = Tkinter.Label(parent, textvariable=errorTxt, font=errorFont)
+  errorLabel = Tkinter.Label(parent, textvariable=errorTxt, font=errorFont, fg="red")
   errorTxt.set(msg)
   dukecardEntry = Tkinter.Entry(parent)
   submitButton = Tkinter.Button(parent, text="Submit", command=mainGUILogic)
@@ -169,15 +170,16 @@ def loadMainGUI():
   directionLabel = Tkinter.Label(parent, textvariable=directionTxt, font=dirFont)
   directionTxt.set("""Welcome {}!
   
-  Please enter your event
+  Directions:
+  CHECKING OUT EQUIPMENT: please enter the name of your event.
+  RETURNING EQUIPMENT: please scan all the equipment to check in.
   
-  Then click one of these options.""".format(user['firstname']))
+  """.format(user['firstname']))
   errorTxt = Tkinter.StringVar()
-  errorLabel = Tkinter.Label(parent, textvariable=errorTxt)
+  errorLabel = Tkinter.Label(parent, textvariable=errorTxt, fg="red")
   errorTxt.set(msg)
   eventEntry = Tkinter.Entry(parent)
-  cobutton = Tkinter.Button(parent, text="Equipment Check Out", command=loadCheckoutLogic)
-  cibutton = Tkinter.Button(parent, text="Equipment Return", command=loadCheckinLogic)
+  cobutton = Tkinter.Button(parent, text="Submit", command=loadCheckoutLogic)
   
   # Format Widgets
   
@@ -186,7 +188,6 @@ def loadMainGUI():
   directionLabel.pack()
   eventEntry.pack()
   cobutton.pack()
-  cibutton.pack()
   errorLabel.pack()
   eventEntry.focus()
   
@@ -195,7 +196,7 @@ def loadMainGUI():
   # Reset error message
   msg = ""
 
-""" CHECKIN LOGIC"""
+""" CHECKOUT LOGIC"""
 def loadCheckoutLogic(*args):
   global eventEntry
   global msg
@@ -205,6 +206,30 @@ def loadCheckoutLogic(*args):
     msg = "Please type in the event for which you're checking out equipment."
     loadMainGUI()
     return
+  
+  # logic to check whether the entry is a registered equipment.
+  isEquip = True
+  try:
+    int(event)
+  except ValueError:
+    isEquip = False
+  if (isEquip):
+    equipID = event
+    response = getEquipInfo(equipID)
+    equip = parseJSON(response)
+    if (equip['equipID'] == '-1'):
+      msg = "Equipment {} not found in database. Please contact the photo editor".format(equipID);
+      loadCheckinGUI()
+      return
+    else:
+      isSuccess = parseJSON(checkinEquip(equipID))
+      if (isSuccess['success'] == '1'):
+        msg = "{} checked in by {} {}.".format(equip['description'], user['firstname'], user['lastname'])
+      else:
+        msg = "There was an error {}. Please contact the photo editor.".format(isSuccess['error'])
+    loadCheckinGUI()
+    return
+  
   loadCheckoutGUI()
 
 def loadCheckoutGUI():
@@ -221,7 +246,7 @@ def loadCheckoutGUI():
   directionTxt.set("""Scan the barcode of all equipment you'd like to checkout.
   Click DONE when finished.""")
   errTxt = Tkinter.StringVar()
-  errLabel = Tkinter.Label(parent, textvariable=errTxt)
+  errLabel = Tkinter.Label(parent, textvariable=errTxt, fg="red")
   errTxt.set(msg)
   equipEntry = Tkinter.Entry(parent)
   submit = Tkinter.Button(parent, text="Checkout", command=checkoutSubmit)
@@ -250,6 +275,7 @@ def checkoutSubmit(*args):
   global equipEntry
   global user
   equipID = equipEntry.get()
+  
   response = getEquipInfo(equipID)
   equip = parseJSON(response)
   if (equip['equipID'] == '-1'):
@@ -263,18 +289,7 @@ def checkoutSubmit(*args):
     msg = "There was an error {}. Please contact the photo editor.".format(isSuccess['error'])
   loadCheckoutGUI()
   
-""" CHECKOUT LOGIC """
-def loadCheckinLogic(*args):
-  global eventEntry
-  global msg
-  global event
-  event = eventEntry.get()
-  if (event == "" or event == None):
-    msg = "Please type in the event you're returning the equipment for."
-    loadMainGUI()
-    return
-  loadCheckinGUI()
-
+""" CHECKIN LOGIC """
 def loadCheckinGUI():
   global msg
   global equipEntry
@@ -289,10 +304,10 @@ def loadCheckinGUI():
   directionTxt.set("""Scan the barcode of all equipment you are returning.
   Click DONE when finished.""")
   errTxt = Tkinter.StringVar()
-  errLabel = Tkinter.Label(parent, textvariable=errTxt)
+  errLabel = Tkinter.Label(parent, textvariable=errTxt, fg="red")
   errTxt.set(msg)
   equipEntry = Tkinter.Entry(parent)
-  submit = Tkinter.Button(parent, text="Return", command=checkinSubmit)
+  submit = Tkinter.Button(parent, text="Submit", command=checkinSubmit)
   done = Tkinter.Button(parent, text="DONE", command=loadLoginGUI)
   
   # Format Widgets
