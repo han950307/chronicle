@@ -154,7 +154,46 @@ def mainGUILogic(*args):
     return
   loadMainGUI()
 
-def loadMainGUI():
+def loadMainGUI(*args):
+  global reasonEntry
+  global root
+  global msg
+  global user
+  global eventEntry
+  
+  resetFrame()
+  root.bind("<Return>", loadMainGUI)
+  parent = Tkinter.Frame(root)
+  
+  # Initialize Widgets
+  directionTxt = Tkinter.StringVar()
+  directionLabel = Tkinter.Label(parent, textvariable=directionTxt, font=dirFont)
+  directionTxt.set("""Welcome {}!
+  
+  Please choose an option.
+  """.format(user['firstname']))
+  errorTxt = Tkinter.StringVar()
+  errorLabel = Tkinter.Label(parent, textvariable=errorTxt, font=errorFont, fg="red")
+  errorTxt.set(msg)
+  cibutton = Tkinter.Button(parent, text="RETURN EQUIPMENT", command=loadCheckinGUI)
+  cobutton = Tkinter.Button(parent, text="CHECKOUT EQUIPMENT", command=loadPreCheckoutGUI)
+  
+  # Format Widgets
+  
+  # Grid/Pack Widgets
+  
+  directionLabel.pack()
+  cobutton.pack()
+  cibutton.pack()
+  errorLabel.pack()
+  
+  parent.pack(expand=1)
+  
+  # Reset error message
+  msg = ""
+
+""" CHECKOUT LOGIC"""
+def loadPreCheckoutGUI(*args):
   global reasonEntry
   global root
   global msg
@@ -168,26 +207,19 @@ def loadMainGUI():
   # Initialize Widgets
   directionTxt = Tkinter.StringVar()
   directionLabel = Tkinter.Label(parent, textvariable=directionTxt, font=dirFont)
-  directionTxt.set("""Welcome {}!
+  directionTxt.set("""CHECK OUT EQUIPMENT (Step 1/2)
   
-  Directions:
-  CHECKING OUT EQUIPMENT: please enter the name of your event.
-  RETURNING EQUIPMENT: please scan all the equipment to check in.
-  
-  """.format(user['firstname']))
+  Please type in the name of your event. 
+  """)
   errorTxt = Tkinter.StringVar()
-  errorLabel = Tkinter.Label(parent, textvariable=errorTxt, fg="red")
+  errorLabel = Tkinter.Label(parent, textvariable=errorTxt,font=errorFont,  fg="red")
   errorTxt.set(msg)
   eventEntry = Tkinter.Entry(parent)
-  cobutton = Tkinter.Button(parent, text="Submit", command=loadCheckoutLogic)
-  
-  # Format Widgets
-  
-  # Grid/Pack Widgets
+  cibutton = Tkinter.Button(parent, text="SUBMIT", command=loadCheckoutGUI)
   
   directionLabel.pack()
   eventEntry.pack()
-  cobutton.pack()
+  cibutton.pack()
   errorLabel.pack()
   eventEntry.focus()
   
@@ -195,8 +227,8 @@ def loadMainGUI():
   
   # Reset error message
   msg = ""
+  
 
-""" CHECKOUT LOGIC"""
 def loadCheckoutLogic(*args):
   global eventEntry
   global msg
@@ -204,7 +236,7 @@ def loadCheckoutLogic(*args):
   event = eventEntry.get()
   if (event == "" or event == None):
     msg = "Please type in the event for which you're checking out equipment."
-    loadMainGUI()
+    loadPreCheckoutGUI()
     return
   
   # logic to check whether the entry is a registered equipment.
@@ -218,16 +250,12 @@ def loadCheckoutLogic(*args):
     response = getEquipInfo(equipID)
     equip = parseJSON(response)
     if (equip['equipID'] == '-1'):
-      msg = "Equipment {} not found in database. Please contact the photo editor".format(equipID);
-      loadCheckinGUI()
+      msg = "Please type in the name of your event"
+      loadPreCheckoutGUI()
       return
     else:
-      isSuccess = parseJSON(checkinEquip(equipID))
-      if (isSuccess['success'] == '1'):
-        msg = "{} checked in by {} {}.".format(equip['description'], user['firstname'], user['lastname'])
-      else:
-        msg = "There was an error {}. Please contact the photo editor.".format(isSuccess['error'])
-    loadCheckinGUI()
+      msg = "There was an error. Please contact the photo editor."
+      loadCheckoutGUI()
     return
   
   loadCheckoutGUI()
@@ -243,10 +271,13 @@ def loadCheckoutGUI():
   # Initialize Widgets
   directionTxt = Tkinter.StringVar()
   directionLabel = Tkinter.Label(parent, textvariable=directionTxt, font=dirFont)
-  directionTxt.set("""Scan the barcode of all equipment you'd like to checkout.
-  Click DONE when finished.""")
+  directionTxt.set("""CHECK OUT EQUIPMENT (Step 2/2)
+  
+  Scan the barcode of all equipment you'd like to checkout.
+  Click DONE when finished.
+  """)
   errTxt = Tkinter.StringVar()
-  errLabel = Tkinter.Label(parent, textvariable=errTxt, fg="red")
+  errLabel = Tkinter.Label(parent, textvariable=errTxt, font=errorFont, fg="red")
   errTxt.set(msg)
   equipEntry = Tkinter.Entry(parent)
   submit = Tkinter.Button(parent, text="Checkout", command=checkoutSubmit)
@@ -301,10 +332,13 @@ def loadCheckinGUI():
   # Initialize Widgets
   directionTxt = Tkinter.StringVar()
   directionLabel = Tkinter.Label(parent, textvariable=directionTxt, font=dirFont)
-  directionTxt.set("""Scan the barcode of all equipment you are returning.
-  Click DONE when finished.""")
+  directionTxt.set("""RETURN EQUIPMENT
+  
+  Scan the barcode of all equipment you are returning.
+  Click DONE when finished.
+  """)
   errTxt = Tkinter.StringVar()
-  errLabel = Tkinter.Label(parent, textvariable=errTxt, fg="red")
+  errLabel = Tkinter.Label(parent, textvariable=errTxt, font=errorFont,  fg="red")
   errTxt.set(msg)
   equipEntry = Tkinter.Entry(parent)
   submit = Tkinter.Button(parent, text="Submit", command=checkinSubmit)
