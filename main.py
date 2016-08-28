@@ -214,7 +214,7 @@ def loadPreCheckoutGUI(*args):
   errorLabel = Tkinter.Label(parent, textvariable=errorTxt,font=errorFont,  fg="red")
   errorTxt.set(msg)
   eventEntry = Tkinter.Entry(parent)
-  cibutton = Tkinter.Button(parent, text="SUBMIT", command=loadCheckoutGUI)
+  cibutton = Tkinter.Button(parent, text="SUBMIT", command=loadCheckoutLogic)
   
   directionLabel.pack()
   eventEntry.pack()
@@ -233,6 +233,7 @@ def loadCheckoutLogic(*args):
   global msg
   global event
   event = eventEntry.get()
+  print event
   if (event == "" or event == None):
     msg = "Please type in the event for which you're checking out equipment."
     loadPreCheckoutGUI()
