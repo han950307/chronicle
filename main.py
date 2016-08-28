@@ -86,7 +86,6 @@ def checkinEquip(equipID):
   global event
   requestURL = str('http://chronphoto-niblet.rhcloud.com/_api/checkinequip.php?equipID=') + \
                str(equipID) + str('&dukecardID=') + str(user['dukecardID']) + str('&eventDesc=') + str(quote_plus(event))
-  print requestURL
   request = Request(requestURL)
   try:
     response = urlopen(request)
