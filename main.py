@@ -254,8 +254,8 @@ def loadCheckoutLogic(*args):
       loadPreCheckoutGUI()
       return
     else:
-      msg = "There was an error. Please contact the photo editor."
-      loadCheckoutGUI()
+      msg = "Please input the name of your event before trying to check out any equipment."
+      loadPreCheckoutGUI()
     return
   
   loadCheckoutGUI()
